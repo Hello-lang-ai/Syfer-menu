@@ -1,0 +1,95 @@
+```lua
+-- Load the required modules
+local gui = loadstring(game:HttpGet("https://raw.githubusercontent.com/BetterThanYouAtCoding/Roblox-Aimbot/main/AimbotGUI.lua"))()
+
+-- Initialize the aimbot
+local aimbot = {
+    enabled = false,
+    target = nil,
+    fov = 100,
+    smoothSpeed = 20,
+    prediction = true,
+    triggerButton = "Mouse1",
+    silentAim = false,
+    autoShoot = false,
+}
+
+-- Create the GUI
+function drawGUI()
+    gui.newFrame("Aimbot Settings")
+        gui.newButton("Toggle Aimbot", function()
+            aimbot.enabled = not aimbot.enabled
+        end)
+        gui.newSlider("FOV", 0, 360, aimbot.fov, function(value)
+            aimbot.fov = value
+        end)
+        gui.newCheckbox("Smoothing", aimbot.smoothSpeed, function(value)
+            aimbot.smoothSpeed = value
+        end)
+        gui.newCheckbox("Prediction", aimbot.prediction, function(value)
+            aimbot.prediction = value
+        end)
+        gui.newCheckbox("Silent Aim", aimbot.silentAim, function(value)
+            aimbot.silentAim = value
+        end)
+        gui.newCheckbox("Auto Shoot", aimbot.autoShoot, function(value)
+            aimbot.autoShoot = value
+        end)
+        gui.newButton("Reset Values", function()
+            aimbot.fov = 100
+            aimbot.smoothSpeed = 20
+            aimbot.prediction = true
+            aimbot.silentAim = false
+            aimbot.autoShoot = false
+        end)
+    gui.newFrame("Target Info")
+        gui.newText("Current Target: "..tostring(aimbot.target))
+        gui.newText("FOV: "..tostring(aimbot.fov))
+        gui.newText("Smoothing: "..tostring(aimbot.smoothSpeed))
+        gui.newText("Prediction: "..tostring(aimbot.prediction))
+        gui.newText("Silent Aim: "..tostring(aimbot.silentAim))
+        gui.newText("Auto Shoot: "..tostring(aimbot.autoShoot))
+    gui.newButton("Save Settings", function()
+        -- Save settings (placeholder, implement actual saving functionality here)
+        print("Settings saved.")
+    end)
+    gui.newButton("Exit", function()
+        gui.destroy()
+    end)
+end
+
+-- Function to get the closest player within the aimbot's field of view
+function getClosestTarget()
+    local player = game.Players.LocalPlayer
+    local character = player.Character
+    local camera = workspace.CurrentCamera
+    local rootPart = character.HumanoidRootPart
+    local mouse = player:GetMouse()
+    local maxDistance = math.huge
+    local target = nil
+
+    for _, p in pairs(game.Players:GetPlayers()) do
+        if p ~= player then
+            local targetPosition = p.Character.HumanoidRootPart.Position
+            local direction = (targetPosition - rootPart.Position).Unit
+            local distance = (targetPosition - rootPart.Position).Magnitude
+            local ray = Ray.new(rootPart.Position, direction)
+            local hit, hitPosition = workspace:FindPartOnRayWithWhitelist(ray, {player})
+
+            -- Check if the target is in the camera's view
+            if hit and hitPosition and distance <= maxDistance and direction.Dot(camera.CFrame.LookVector) > 0 then
+                maxDistance = distance
+                target = p
+            end
+        end
+    end
+
+    return target
+end
+
+-- Function to calculate the aim point
+function calculateAimPoint(target, smoothSpeed)
+    if target then
+        local character = target.Character
+        local humanoidRootPart = character.HumanoidRootPart
+        local aim
